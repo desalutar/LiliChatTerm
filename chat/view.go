@@ -5,25 +5,14 @@ import (
 	"strings"
 )
 
-func (m ChatScreenModel) View() string {
+func (m *ChatScreenModel) View() string {
 	var b strings.Builder
 
-	if m.State.IsSearchMode {
-		b.WriteString("=== Search User ===\n\n")
-		if m.State.SearchMessage != "" {
-			b.WriteString(m.State.SearchMessage + "\n\n")
-		}
-		b.WriteString("Enter username: " + m.Inputs.SearchUserInput.View())
-		b.WriteString("\n\nPress Enter to search, Esc to cancel.\n")
-		return b.String()
+	if m.State.IsSearchMode { 
+		m.searchUserView(&b)
 	}
 
-	// Chat view
-	b.WriteString(fmt.Sprintf("=== Chat with User %d ===\n", m.State.ReceiverID))
-	if m.State.SearchMessage != "" {
-		b.WriteString(m.State.SearchMessage + "\n")
-	}
-	b.WriteString("\n")
+	m.chatView(&b)
 
 	for _, msg := range m.Messages {
 		if msg.SenderID == m.UserID {
@@ -36,4 +25,22 @@ func (m ChatScreenModel) View() string {
 	b.WriteString("\n" + m.Inputs.ChatAreaInput.View())
 	b.WriteString("\n\nPress Enter to send, Ctrl+S to search user, q to quit.\n")
 	return b.String()
+}
+
+func (m *ChatScreenModel) searchUserView(sb *strings.Builder) string {
+	sb.WriteString("=== Search User ===\n\n")
+	if m.State.SearchMessage != "" {
+		sb.WriteString(m.State.SearchMessage + "\n\n")
+	}
+	sb.WriteString("Enter username: " + m.Inputs.SearchUserInput.View())
+	sb.WriteString("\n\nPress Enter to search, Esc to cancel.\n")
+	return sb.String()
+}
+
+func (m *ChatScreenModel) chatView(sb *strings.Builder) {
+	sb.WriteString(fmt.Sprintf("=== Chat with User %d ===\n", m.State.ReceiverID))
+	if m.State.SearchMessage != "" {
+		sb.WriteString(m.State.SearchMessage + "\n")
+	}
+	sb.WriteString("\n")
 }
