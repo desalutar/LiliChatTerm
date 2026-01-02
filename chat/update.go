@@ -56,7 +56,6 @@ func (c *ChatScreenModel) updateInputs(msg tea.Msg) (tea.Model, tea.Cmd) {
 	c.Inputs.ChatAreaInput, _ = c.Inputs.ChatAreaInput.Update(msg)
 	c.Inputs.SearchUserInput, _ = c.Inputs.SearchUserInput.Update(msg)
 
-
 	for {
 		select {
 		case incoming := <-c.MsgChan:
@@ -81,15 +80,7 @@ func (c *ChatScreenModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		c.State.IsSearchMode = true
 		return c, c.Inputs.SearchUserInput.Focus()
 	case "enter":
-		if c.State.IsSearchMode {
-			username := c.Inputs.SearchUserInput.Value()
-			if username != "" {
-				c.State.SearchMessage = "Searching..."
-				return c, searchUserCmd(c.Token, username)
-			}
-		} else {
-			return c.handleSendMessage()
-		}
+		return c.handleEnter()
 	}
 	return c, nil
 }
