@@ -13,14 +13,12 @@ func (c *ChatScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		m, specialCmd := c.handleKeyMsg(msg)
 		if specialCmd != nil {
-			// если это Cmd для поиска или выхода
 			if casted, ok := m.(*ChatScreenModel); ok {
 				c = casted
 			}
 			return m, specialCmd
 		}
 
-		// если клавиша не special, прокидываем в input
 		if casted, ok := m.(*ChatScreenModel); ok {
 			c = casted
 		}
@@ -32,7 +30,6 @@ func (c *ChatScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case searchResultMsg:
 		return c.handleSearchResult(msg)
 	default:
-		// для остальных типов сообщений
 		if c.State.IsSearchMode {
 			c.Inputs.SearchUserInput, cmd = c.Inputs.SearchUserInput.Update(msg)
 		} else {
@@ -40,7 +37,6 @@ func (c *ChatScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// Обработка входящих сообщений
 	for {
 		select {
 		case incoming := <-c.MsgChan:
@@ -53,8 +49,6 @@ func (c *ChatScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 }
-
-
 
 func (c *ChatScreenModel) updateInputs(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd

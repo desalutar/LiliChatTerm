@@ -22,7 +22,6 @@ type incomingMsg Message
 type ChatInputs struct {
 	ChatAreaInput		textinput.Model
 	SearchUserInput 	textinput.Model
-	// FocusIdx    	int
 }
 
 type ChatState struct {
