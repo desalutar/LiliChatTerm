@@ -56,7 +56,5 @@ func NewChatScreenModel(userID int64, token string, wsClient *ws.Client) *ChatSc
         Messages: []Message{},
         MsgChan: make(chan incomingMsg, 100),
     }
-	m.Inputs.ChatAreaInput.Focus()
-	m.InitWS()
 	return m
 }
