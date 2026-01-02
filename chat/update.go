@@ -45,9 +45,8 @@ func (c *ChatScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		default:
 			return c, cmd
+		}
 	}
-}
-
 }
 
 func (c *ChatScreenModel) updateInputs(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -86,13 +85,12 @@ func (c *ChatScreenModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (c *ChatScreenModel) limitMessages() {
-	// TODO: изменить способ хранения сообщений 
+	// TODO: изменить способ хранения сообщений
 	const MaxMessages = 200
 	if len(c.Messages) > MaxMessages {
 		c.Messages = c.Messages[len(c.Messages)-MaxMessages:]
 	}
 }
-
 
 func (c *ChatScreenModel) handleEnter() (tea.Model, tea.Cmd) {
 	if c.State.IsSearchMode {
@@ -102,7 +100,7 @@ func (c *ChatScreenModel) handleEnter() (tea.Model, tea.Cmd) {
 }
 
 func (c *ChatScreenModel) handleSearch() (tea.Model, tea.Cmd) {
-	username := c.Inputs.SearchUserInput.Value() 
+	username := c.Inputs.SearchUserInput.Value()
 	if username == "" {
 		return c, nil
 	}
@@ -111,18 +109,17 @@ func (c *ChatScreenModel) handleSearch() (tea.Model, tea.Cmd) {
 	return c, searchUserCmd(c.Token, username)
 }
 
-
-func (c *ChatScreenModel) handleSendMessage()(tea.Model, tea.Cmd) {
+func (c *ChatScreenModel) handleSendMessage() (tea.Model, tea.Cmd) {
 	text := c.Inputs.ChatAreaInput.Value()
 	if text == "" {
 		return c, nil
 	}
 
-	msg := Message {
-		SenderID: c.UserID,
+	msg := Message{
+		SenderID:   c.UserID,
 		ReceiverID: c.State.ReceiverID,
-		Text: text,
-	}	
+		Text:       text,
+	}
 
 	c.Messages = append(c.Messages, msg)
 	c.limitMessages()
