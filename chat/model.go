@@ -28,6 +28,7 @@ type ChatState struct {
 	IsSearchMode  bool
 	SearchMessage string
 	ReceiverID    int64
+	Error 		  error
 }
 
 type searchResultMsg struct {
@@ -44,6 +45,7 @@ type ChatScreenModel struct {
 	Messages []Message
 	MsgChan  chan incomingMsg
 	WsClient ws.WsClienter
+	Error 	 error
 }
 
 func NewChatScreenModel(userID int64, token string, wsClient *ws.Client) *ChatScreenModel{

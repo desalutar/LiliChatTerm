@@ -88,26 +88,61 @@ func (c *ChatScreenModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				return c, searchUserCmd(c.Token, username)
 			}
 		} else {
-			text := c.Inputs.ChatAreaInput.Value()
-			if text != "" {
-				// Добавляем локально, чтобы сразу отображалось
-				c.Messages = append(c.Messages, Message{
-					SenderID:   c.UserID,
-					ReceiverID: c.State.ReceiverID,
-					Text:       text,
-				})
-
-				// Отправляем на сервер
-				_ = c.WsClient.SendMessage(c.State.ReceiverID, text)
-
-				// Очищаем input
-				c.Inputs.ChatAreaInput.SetValue("")
-			}
+			return c.handleSendMessage()
 		}
 	}
 	return c, nil
 }
 
+func (c *ChatScreenModel) limitMessages() {
+	// TODO: изменить способ хранения сообщений 
+	const MaxMessages = 200
+	if len(c.Messages) > MaxMessages {
+		c.Messages = c.Messages[len(c.Messages)-MaxMessages:]
+	}
+}
+
+
+func (c *ChatScreenModel) handleEnter() (tea.Model, tea.Cmd) {
+	if c.State.IsSearchMode {
+		return c.handleSearch()
+	}
+	return c.handleSendMessage()
+}
+
+func (c *ChatScreenModel) handleSearch() (tea.Model, tea.Cmd) {
+	username := c.Inputs.SearchUserInput.Value() 
+	if username == "" {
+		return c, nil
+	}
+
+	c.State.SearchMessage = "Searching..."
+	return c, searchUserCmd(c.Token, username)
+}
+
+
+func (c *ChatScreenModel) handleSendMessage()(tea.Model, tea.Cmd) {
+	text := c.Inputs.ChatAreaInput.Value()
+	if text == "" {
+		return c, nil
+	}
+
+	msg := Message {
+		SenderID: c.UserID,
+		ReceiverID: c.State.ReceiverID,
+		Text: text,
+	}	
+
+	c.Messages = append(c.Messages, msg)
+	c.limitMessages()
+
+	if err := c.WsClient.SendMessage(msg.ReceiverID, msg.Text); err != nil {
+		c.State.Error = err
+	}
+
+	c.Inputs.ChatAreaInput.SetValue("")
+	return c, nil
+}
 
 func (c *ChatScreenModel) handleSearchResult(msg searchResultMsg) (tea.Model, tea.Cmd) {
 	if msg.Err != nil {
