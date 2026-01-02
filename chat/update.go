@@ -22,47 +22,31 @@ func (c *ChatScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if casted, ok := m.(*ChatScreenModel); ok {
 			c = casted
 		}
-		if c.State.IsSearchMode {
-			c.Inputs.SearchUserInput, cmd = c.Inputs.SearchUserInput.Update(msg)
-		} else {
-			c.Inputs.ChatAreaInput, cmd = c.Inputs.ChatAreaInput.Update(msg)
-		}
 	case searchResultMsg:
 		return c.handleSearchResult(msg)
-	default:
-		if c.State.IsSearchMode {
-			c.Inputs.SearchUserInput, cmd = c.Inputs.SearchUserInput.Update(msg)
-		} else {
-			c.Inputs.ChatAreaInput, cmd = c.Inputs.ChatAreaInput.Update(msg)
-		}
 	}
+	cmd = c.updateInputs(msg)
 
-	for {
-		select {
-		case incoming := <-c.MsgChan:
-			if incoming.SenderID != c.UserID {
-				c.Messages = append(c.Messages, Message(incoming))
-			}
-		default:
-			return c, cmd
+	for len(c.MsgChan) > 0 {
+		incoming := <-c.MsgChan
+		if incoming.SenderID != c.UserID {
+			c.Messages = append(c.Messages, Message(incoming))
+			c.limitMessages()
 		}
 	}
+	return c, cmd
 }
 
-func (c *ChatScreenModel) updateInputs(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (c *ChatScreenModel) updateInputs(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 
-	c.Inputs.ChatAreaInput, _ = c.Inputs.ChatAreaInput.Update(msg)
-	c.Inputs.SearchUserInput, _ = c.Inputs.SearchUserInput.Update(msg)
-
-	for {
-		select {
-		case incoming := <-c.MsgChan:
-			c.Messages = append(c.Messages, Message(incoming))
-		default:
-			return c, cmd
-		}
+	if c.State.IsSearchMode {
+		c.Inputs.SearchUserInput, cmd = c.Inputs.SearchUserInput.Update(msg)
+	} else {
+		c.Inputs.ChatAreaInput, cmd = c.Inputs.ChatAreaInput.Update(msg)
 	}
+
+	return cmd
 }
 
 func (c *ChatScreenModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
