@@ -8,22 +8,23 @@ import (
 func (m *ChatScreenModel) View() string {
 	var b strings.Builder
 
-	if m.State.IsSearchMode { 
+	if m.State.IsSearchMode {
 		m.searchUserView(&b)
-	}
+	} else {
+		m.chatView(&b)
 
-	m.chatView(&b)
-
-	for _, msg := range m.Messages {
-		if msg.SenderID == m.UserID {
-			b.WriteString(msg.Text + "\n")
-		} else {
-			b.WriteString(fmt.Sprintf("User %d: %s\n", msg.SenderID, msg.Text))
+		for _, msg := range m.Messages {
+			if msg.SenderID == m.UserID {
+				b.WriteString(msg.Text + "\n")
+			} else {
+				b.WriteString(fmt.Sprintf("User %d: %s\n", msg.SenderID, msg.Text))
+			}
 		}
+
+		b.WriteString("\n" + m.Inputs.ChatAreaInput.View())
+		b.WriteString("\n\nPress Enter to send, Ctrl+S to search user, q to quit.\n")
 	}
 
-	b.WriteString("\n" + m.Inputs.ChatAreaInput.View())
-	b.WriteString("\n\nPress Enter to send, Ctrl+S to search user, q to quit.\n")
 	return b.String()
 }
 
