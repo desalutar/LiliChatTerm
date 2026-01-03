@@ -15,7 +15,7 @@ func (m *ChatScreenModel) View() string {
 
 		for _, msg := range m.Messages {
 			if msg.SenderID == m.UserID {
-				b.WriteString(msg.Text + "\n")
+				b.WriteString(strings.Repeat(" ", 80)+ msg.Text + "\n")
 			} else {
 				b.WriteString(fmt.Sprintf("User %d: %s\n", msg.SenderID, msg.Text))
 			}

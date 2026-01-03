@@ -7,7 +7,5 @@ import (
 
 
 func (c *ChatScreenModel) Init() tea.Cmd {
-	c.Inputs.ChatAreaInput.Focus()
-	c.InitWS()
 	return textinput.Blink
 }
