@@ -17,6 +17,7 @@ func (m *ChatScreenModel) View() string {
 			if msg.SenderID == m.UserID {
 				b.WriteString(strings.Repeat(" ", 80)+ msg.Text + "\n")
 			} else {
+				// TODO: при получении сообщения показать от кого пришло а не UserID
 				b.WriteString(fmt.Sprintf("User %d: %s\n", msg.SenderID, msg.Text))
 			}
 		}
@@ -38,8 +39,9 @@ func (m *ChatScreenModel) searchUserView(sb *strings.Builder) string {
 	return sb.String()
 }
 
+
 func (m *ChatScreenModel) chatView(sb *strings.Builder) {
-	sb.WriteString(fmt.Sprintf("=== Chat with User %d ===\n", m.State.ReceiverID))
+	sb.WriteString(fmt.Sprintf("=== Chat with User %s ===\n", m.State.ReceiverName))
 	if m.State.SearchMessage != "" {
 		sb.WriteString(m.State.SearchMessage + "\n")
 	}

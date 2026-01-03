@@ -1,8 +1,6 @@
 package chat
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -92,8 +90,9 @@ func (c *ChatScreenModel) handleSearchResult(msg searchResultMsg) (tea.Model, te
 	}
 
 	c.State.ReceiverID = msg.UserID
+	c.State.ReceiverName = msg.Username
 	c.Messages = []Message{}
-	c.State.SearchMessage = fmt.Sprintf("Found user: %s (ID: %d)", msg.Username, msg.UserID)
+	c.State.SearchMessage = ""
 	c.State.IsSearchMode = false
 	return c, c.Inputs.ChatAreaInput.Focus()
 }

@@ -1,7 +1,6 @@
 package chat
 
 import (
-
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 )

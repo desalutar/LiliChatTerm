@@ -2,9 +2,7 @@ package chat
 
 import (
 	"client/ws"
-
 	"github.com/charmbracelet/bubbles/textinput"
-	// tea "github.com/charmbracelet/bubbletea"
 )
 
 type Message struct {
@@ -24,6 +22,7 @@ type ChatState struct {
 	IsSearchMode  bool
 	SearchMessage string
 	ReceiverID    int64
+	ReceiverName  string
 	Error 		  error
 }
 
@@ -34,13 +33,13 @@ type searchResultMsg struct {
 }
 
 type ChatScreenModel struct {
-	Inputs   ChatInputs
-	State    ChatState
-	UserID   int64
-	Token    string
-	Messages []Message
-	MsgChan  chan incomingMsg
-	WsClient ws.WsClienter
+	Inputs   		ChatInputs
+	State    		ChatState
+	UserID   		int64
+	Token    		string
+	Messages 		[]Message
+	MsgChan  		 chan incomingMsg
+	WsClient 		 ws.WsClienter
 }
 
 func NewChatScreenModel(userID int64, token string, wsClient *ws.Client) *ChatScreenModel{
