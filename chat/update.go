@@ -27,10 +27,21 @@ func (c *ChatScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	for len(c.MsgChan) > 0 {
 		incoming := <-c.MsgChan
-		if incoming.SenderID != c.UserID {
+
+		// проверяем по ID, есть ли уже такое сообщение
+		exists := false
+		for _, msg := range c.Messages {
+			if msg.ID == incoming.ID {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
 			c.Messages = append(c.Messages, Message(incoming))
 			c.limitMessages()
 		}
 	}
+
 	return c, cmd
 }

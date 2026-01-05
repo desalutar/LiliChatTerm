@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"log"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -72,9 +73,6 @@ func (c *ChatScreenModel) handleSendMessage() (tea.Model, tea.Cmd) {
 		Text:       text,
 	}
 
-	c.Messages = append(c.Messages, msg)
-	c.limitMessages()
-
 	if err := c.WsClient.SendMessage(msg.ReceiverID, msg.Text); err != nil {
 		c.State.Error = err
 	}
@@ -82,6 +80,7 @@ func (c *ChatScreenModel) handleSendMessage() (tea.Model, tea.Cmd) {
 	c.Inputs.ChatAreaInput.SetValue("")
 	return c, nil
 }
+
 
 func (c *ChatScreenModel) handleSearchResult(msg searchResultMsg) (tea.Model, tea.Cmd) {
 	if msg.Err != nil {
@@ -94,5 +93,11 @@ func (c *ChatScreenModel) handleSearchResult(msg searchResultMsg) (tea.Model, te
 	c.Messages = []Message{}
 	c.State.SearchMessage = ""
 	c.State.IsSearchMode = false
+
+	err := c.WsClient.LoadHistory(c.State.ReceiverID)
+	if err != nil {
+		log.Println("Failed to send load_history:", err)
+	}
+
 	return c, c.Inputs.ChatAreaInput.Focus()
 }

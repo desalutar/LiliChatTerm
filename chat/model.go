@@ -6,6 +6,7 @@ import (
 )
 
 type Message struct {
+	ID         string
 	SenderID   int64
 	ReceiverID int64
 	Text       string
@@ -23,6 +24,7 @@ type ChatState struct {
 	SearchMessage string
 	ReceiverID    int64
 	ReceiverName  string
+	HistoryLoaded bool
 	Error 		  error
 }
 

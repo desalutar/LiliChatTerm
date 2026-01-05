@@ -39,11 +39,22 @@ func (m *ChatScreenModel) searchUserView(sb *strings.Builder) string {
 	return sb.String()
 }
 
-
 func (m *ChatScreenModel) chatView(sb *strings.Builder) {
-	sb.WriteString(fmt.Sprintf("=== Chat with User %s ===\n", m.State.ReceiverName))
-	if m.State.SearchMessage != "" {
-		sb.WriteString(m.State.SearchMessage + "\n")
+	sb.WriteString(fmt.Sprintf("=== Chat with User %s ===\n\n", m.State.ReceiverName))
+
+	if len(m.Messages) == 0 {
+		if !m.State.HistoryLoaded {
+			sb.WriteString("Loading history...\n\n")
+		} else {
+			sb.WriteString("No messages yet.\n\n")
+		}
 	}
-	sb.WriteString("\n")
+
+	for _, msg := range m.Messages {
+		if msg.SenderID == m.UserID {
+			sb.WriteString(strings.Repeat(" ", 80) + msg.Text + "\n")
+		} else {
+			sb.WriteString(fmt.Sprintf("User %d: %s\n", msg.SenderID, msg.Text))
+		}
+	}
 }
