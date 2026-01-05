@@ -1,69 +1,84 @@
 package chat
 
-import "fmt"
+import (
+	"client/utils"
+	"fmt"
+	"log"
+)
 
 func (c *ChatScreenModel) InitWS() {
-	go c.WsClient.ReadMessages(func(msgType string, data interface{}) {
-		switch msgType {
-		case "message":
-			m := data.(map[string]interface{})
+    if c.Store == nil {
+        c.Store = NewMessageStore()
+    }
+    go c.WsClient.ReadMessages(func(msgType string, data interface{}) {
+        msgMap, ok := data.(map[string]interface{})
+        if !ok {
+            log.Println("Received data is not a map:", data)
+			return
+        }
 
-			// безопасно получаем id
-			var msgID string
-			if m["id"] != nil {
-				msgID, _ = m["id"].(string)
-			} else {
-				// генерируем временный ID
-				msgID = fmt.Sprintf("%v-%v-%v", m["sender_id"], m["receiver_id"], m["created_at"])
+        switch msgType {
+        case "message":
+            c.processSingleMessage(msgMap, true)
+
+        case "history":
+            historyIface, ok := msgMap["messages"]
+            if !ok {
+                log.Println("History payload missing 'messages' key")
+				return
+            }
+
+            historySlice, ok := historyIface.([]interface{})
+            if !ok {
+				log.Println("History messages is not a slice:", historyIface)
+				return
 			}
 
-			// проверка на дубликат
-			for _, existing := range c.Messages {
-				if existing.ID == msgID {
-					return // уже есть, пропускаем
-				}
-			}
-
-			c.MsgChan <- incomingMsg{
-				ID:         msgID,
-				SenderID:   int64(m["sender_id"].(float64)),
-				ReceiverID: int64(m["receiver_id"].(float64)),
-				Text:       m["text"].(string),
-			}
-
-		case "history":
-			history := data.(map[string]interface{})["messages"].([]interface{})
-			for _, m := range history {
-				mMap := m.(map[string]interface{})
-
-				var msgID string
-				if mMap["id"] != nil {
-					msgID, _ = mMap["id"].(string)
-				} else {
-					// генерируем временный ID
-					msgID = fmt.Sprintf("%v-%v-%v", mMap["sender_id"], mMap["receiver_id"], mMap["created_at"])
-				}
-
-				// проверка на дубликат
-				duplicate := false
-				for _, existing := range c.Messages {
-					if existing.ID == msgID {
-						duplicate = true
-						break
-					}
-				}
-				if duplicate {
+            for _, m := range historySlice {
+                mMap, ok := m.(map[string]interface{})
+                if !ok {
+                    log.Println("History item is not a map:", m)
 					continue
-				}
+                }
+                c.processSingleMessage(mMap, false)
+            }
+        default:
+            log.Println("Unknown WS message type:", msgType)
+        }
+    })
+}
 
-				msg := Message{
-					ID:         msgID,
-					SenderID:   int64(mMap["sender_id"].(float64)),
-					ReceiverID: int64(mMap["receiver_id"].(float64)),
-					Text:       mMap["text"].(string),
-				}
-				c.Messages = append(c.Messages, msg)
-			}
-		}
-	})
+func (c *ChatScreenModel) processSingleMessage(m map[string]interface{}, sendToChan bool) {
+    var msgID string
+    if idVal, exists := m["id"]; exists && idVal != nil {
+        msgID, _ = idVal.(string)
+    } else {
+		msgID = fmt.Sprintf("%v-%v-%v", m["sender_id"], m["receiver_id"], m["created_at"])
+    }
+
+    if _, exists := c.Store.seenIDs[msgID]; exists {
+        return
+    }
+
+    senderID := utils.SafeInt64(m["sender_id"])
+	receiverID := utils.SafeInt64(m["receiver_id"])
+	text := utils.SafeString(m["text"])
+
+    msg := Message {
+        ID: msgID,
+        SenderID: senderID,
+        ReceiverID: receiverID,
+        Text: text,
+    }
+
+    c.Store.AddMessageIfIDNotExist(msg)
+
+    if mType, ok := m["type"].(string); ok && mType == "message" {
+        c.MsgChan <- incomingMsg{
+            ID:         msgID,
+            SenderID:   senderID,
+            ReceiverID: receiverID,
+            Text:       text,
+        }
+    }
 }

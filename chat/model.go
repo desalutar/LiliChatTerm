@@ -5,11 +5,10 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 )
 
-type Message struct {
-	ID         string
-	SenderID   int64
-	ReceiverID int64
-	Text       string
+type WSMessage struct {
+	Type string
+	Msg *Message
+	List []Message
 }
 
 type incomingMsg Message
@@ -42,6 +41,7 @@ type ChatScreenModel struct {
 	Messages 		[]Message
 	MsgChan  		 chan incomingMsg
 	WsClient 		 ws.WsClienter
+	Store 			*MessageStore
 }
 
 func NewChatScreenModel(userID int64, token string, wsClient *ws.Client) *ChatScreenModel{
