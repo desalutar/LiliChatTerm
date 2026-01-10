@@ -39,8 +39,8 @@ type ChatScreenModel struct {
 	UserID   		int64
 	Token    		string
 	Messages 		[]Message
-	MsgChan  		 chan incomingMsg
-	WsClient 		 ws.WsClienter
+	MsgChan  		chan incomingMsg
+	WsClient 		ws.WsClienter
 	Store 			*MessageStore
 }
 
