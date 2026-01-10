@@ -13,15 +13,6 @@ func (m *ChatScreenModel) View() string {
 	} else {
 		m.chatView(&b)
 
-		for _, msg := range m.Messages {
-			if msg.SenderID == m.UserID {
-				b.WriteString(strings.Repeat(" ", 80)+ msg.Text + "\n")
-			} else {
-				// TODO: при получении сообщения показать от кого пришло а не UserID
-				b.WriteString(fmt.Sprintf("User %d: %s\n", msg.SenderID, msg.Text))
-			}
-		}
-
 		b.WriteString("\n" + m.Inputs.ChatAreaInput.View())
 		b.WriteString("\n\nPress Enter to send, Ctrl+S to search user, q to quit.\n")
 	}
