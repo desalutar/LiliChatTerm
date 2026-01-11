@@ -10,75 +10,72 @@ func (c *ChatScreenModel) InitWS() {
 	if c.Store == nil {
 		c.Store = NewMessageStore()
 	}
+
 	go c.WsClient.ReadMessages(func(msgType string, data interface{}) {
-		msgMap, ok := data.(map[string]interface{})
+		dataMap, ok := data.(map[string]interface{})
 		if !ok {
-			log.Println("Received data is not a map:", data)
 			return
 		}
 
 		switch msgType {
 		case "message":
-			c.processSingleMessage(msgMap)
-
+			c.processSingleMessage(dataMap)
 		case "history":
-			c.handleHistory(msgMap["messages"])
+			if raw, ok := dataMap["messages"]; ok {
+				c.handleHistory(raw)
+			} else {
+				log.Println("[WS] History key 'messages' missing:", dataMap)
+			}
 		case "connected":
-			log.Println("WS connected:", msgMap)
+			log.Println("[WS] Connected:", dataMap)
 		case "error":
-			errMsg, _ := msgMap["error"].(string)
-			log.Println("Server error:", errMsg)
-
+			errMsg, _ := dataMap["error"].(string)
+			log.Println("[WS] Server error:", errMsg)
 		default:
-			log.Println("Unknown WS message type:", msgType)
+			log.Println("[WS] Unknown WS message type:", msgType)
 		}
 	})
 }
 
+func (c *ChatScreenModel) convertMapToMessage(m map[string]interface{}) Message {
+	return Message{
+		ID:         fmt.Sprintf("%v", m["id"]),
+		SenderID:   utils.SafeInt64(m["sender_id"]),
+		ReceiverID: utils.SafeInt64(m["receiver_id"]),
+		Text:       utils.SafeString(m["text"]),
+	}
+}
+
 func (c *ChatScreenModel) processSingleMessage(m map[string]interface{}) {
-	var msgID string
-	if idVal, exists := m["id"]; exists && idVal != nil {
-		msgID, _ = idVal.(string)
-	} else {
-		senderID := utils.SafeInt64(m["sender_id"])
-		receiverID := utils.SafeInt64(m["receiver_id"])
-		text := utils.SafeString(m["text"])
-		msgID = fmt.Sprintf("%v-%v-%v", senderID, receiverID, text)
+	msg := c.convertMapToMessage(m)
+
+	if msg.ID == "" {
+		msg.ID = fmt.Sprintf("%v-%v-%v", msg.SenderID, msg.ReceiverID, msg.Text)
 	}
 
-	if _, exists := c.Store.seenIDs[msgID]; exists {
+	if _, exists := c.Store.seenIDs[msg.ID]; exists {
 		return
 	}
 
-	senderID := utils.SafeInt64(m["sender_id"])
-	receiverID := utils.SafeInt64(m["receiver_id"])
-	text := utils.SafeString(m["text"])
-
-	msg := Message{
-		ID:         msgID,
-		SenderID:   senderID,
-		ReceiverID: receiverID,
-		Text:       text,
-	}
-
-    c.Store.AddMessageIfIDNotExist(msg)
-    c.Messages = append(c.Messages, msg)
+	c.Store.AddMessageIfIDNotExist(msg)
+	c.Messages = append(c.Messages, msg)
 }
-
 
 func (c *ChatScreenModel) handleHistory(messages interface{}) {
 	historySlice, ok := messages.([]interface{})
 	if !ok {
-		log.Println("History messages is not a slice:", messages)
+		log.Println("[WS] History messages is not a slice:", messages)
 		return
 	}
 
 	for _, m := range historySlice {
 		mMap, ok := m.(map[string]interface{})
 		if !ok {
-			log.Println("History item is not a map:", m)
+			log.Println("[WS] History item is not a map:", m)
 			continue
 		}
 		c.processSingleMessage(mMap)
 	}
+
+	c.State.HistoryLoaded = true
 }
