@@ -67,20 +67,14 @@ func (c *ChatScreenModel) handleSendMessage() (tea.Model, tea.Cmd) {
 		return c, nil
 	}
 
-	msg := Message{
-		SenderID:   c.UserID,
-		ReceiverID: c.State.ReceiverID,
-		Text:       text,
-	}
-
-	if err := c.WsClient.SendMessage(msg.ReceiverID, msg.Text); err != nil {
+	err := c.WsClient.SendMessage(c.State.ReceiverID, text)
+	if err != nil {
 		c.State.Error = err
 	}
 
 	c.Inputs.ChatAreaInput.SetValue("")
 	return c, nil
 }
-
 
 func (c *ChatScreenModel) handleSearchResult(msg searchResultMsg) (tea.Model, tea.Cmd) {
 	if msg.Err != nil {
@@ -90,13 +84,14 @@ func (c *ChatScreenModel) handleSearchResult(msg searchResultMsg) (tea.Model, te
 
 	c.State.ReceiverID = msg.UserID
 	c.State.ReceiverName = msg.Username
-	c.Messages = []Message{}
+	c.Messages = nil
 	c.State.SearchMessage = ""
 	c.State.IsSearchMode = false
+	c.State.HistoryLoaded = false
 
 	err := c.WsClient.LoadHistory(c.State.ReceiverID)
 	if err != nil {
-		log.Println("Failed to send load_history:", err)
+		log.Println("Failed to load history:", err)
 	}
 
 	return c, c.Inputs.ChatAreaInput.Focus()

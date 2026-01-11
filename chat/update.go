@@ -9,37 +9,32 @@ func (c *ChatScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		m, specialCmd := c.handleKeyMsg(msg)
-		if specialCmd != nil {
-			if casted, ok := m.(*ChatScreenModel); ok {
-				c = casted
+		switch msg.String() {
+		case "ctrl+c":
+			return c, tea.Quit
+		case "esc":
+			if c.State.IsSearchMode {
+				c.State.IsSearchMode = false
+				c.State.SearchMessage = ""
+				return c, c.Inputs.ChatAreaInput.Focus()
 			}
-			return m, specialCmd
-		}
-
-		if casted, ok := m.(*ChatScreenModel); ok {
-			c = casted
+		case "ctrl+s":
+			c.State.IsSearchMode = true
+			return c, c.Inputs.SearchUserInput.Focus()
+		case "enter":
+			if c.State.IsSearchMode {
+				return c.handleSearch()
+			}
+			return c.handleSendMessage()
 		}
 	case searchResultMsg:
 		return c.handleSearchResult(msg)
 	}
-	cmd = c.updateInputs(msg)
 
-	for len(c.MsgChan) > 0 {
-		incoming := <-c.MsgChan
-
-		exists := false
-		for _, msg := range c.Messages {
-			if msg.ID == incoming.ID {
-				exists = true
-				break
-			}
-		}
-
-		if !exists {
-			c.Messages = append(c.Messages, Message(incoming))
-			c.limitMessages()
-		}
+	if c.State.IsSearchMode {
+		c.Inputs.SearchUserInput, cmd = c.Inputs.SearchUserInput.Update(msg)
+	} else {
+		c.Inputs.ChatAreaInput, cmd = c.Inputs.ChatAreaInput.Update(msg)
 	}
 
 	return c, cmd

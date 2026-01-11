@@ -5,6 +5,15 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 )
 
+type Message struct {
+    ID         string `json:"id"`           // ← главный ключ уникальности!
+    DialogID   string `json:"dialog_id"`
+    SenderID   int64  `json:"sender_id"`
+    ReceiverID int64  `json:"receiver_id"`
+    Text       string `json:"text"`
+    CreatedAt  string `json:"created_at"`   // для сортировки
+}
+
 type WSMessage struct {
 	Type string
 	Msg *Message
@@ -39,25 +48,23 @@ type ChatScreenModel struct {
 	UserID   		int64
 	Token    		string
 	Messages 		[]Message
-	MsgChan  		chan incomingMsg
 	WsClient 		ws.WsClienter
-	Store 			*MessageStore
 }
 
-func NewChatScreenModel(userID int64, token string, wsClient *ws.Client) *ChatScreenModel{
-    m :=  &ChatScreenModel{
-        UserID: userID,
-        Token:  token,
-        WsClient: wsClient,
-        Inputs: ChatInputs{
-            ChatAreaInput:    NewChatAreaInput(),
-            SearchUserInput:  NewSearchUserAreaInput(),
-        },
-        State: ChatState{},
-        Messages: []Message{},
-        MsgChan: make(chan incomingMsg, 100),
-    }
+func NewChatScreenModel(userID int64, token string, wsClient ws.WsClienter) *ChatScreenModel {
+	m := &ChatScreenModel{
+		UserID:   userID,
+		Token:    token,
+		WsClient: wsClient,
+		Inputs: ChatInputs{
+			ChatAreaInput:   NewChatAreaInput(),
+			SearchUserInput: NewSearchUserAreaInput(),
+		},
+		Messages: []Message{},
+	}
+
 	m.Inputs.ChatAreaInput.Focus()
 	m.InitWS()
+
 	return m
 }

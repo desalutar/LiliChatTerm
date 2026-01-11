@@ -9,44 +9,52 @@ func (m *ChatScreenModel) View() string {
 	var b strings.Builder
 
 	if m.State.IsSearchMode {
-		m.searchUserView(&b)
+		m.renderSearchMode(&b)
 	} else {
-		m.chatView(&b)
-
-		b.WriteString("\n" + m.Inputs.ChatAreaInput.View())
-		b.WriteString("\n\nPress Enter to send, Ctrl+S to search user, q to quit.\n")
+		m.renderChatMode(&b)
 	}
 
 	return b.String()
 }
 
-func (m *ChatScreenModel) searchUserView(sb *strings.Builder) string {
-	sb.WriteString("=== Search User ===\n\n")
+func (m *ChatScreenModel) renderSearchMode(b *strings.Builder) {
+	b.WriteString("=== Search User ===\n\n")
+
 	if m.State.SearchMessage != "" {
-		sb.WriteString(m.State.SearchMessage + "\n\n")
+		b.WriteString(m.State.SearchMessage + "\n\n")
 	}
-	sb.WriteString("Enter username: " + m.Inputs.SearchUserInput.View())
-	sb.WriteString("\n\nPress Enter to search, Esc to cancel.\n")
-	return sb.String()
+
+	b.WriteString("Enter username: " + m.Inputs.SearchUserInput.View())
+	b.WriteString("\n\nEnter — search, Esc — cancel\n")
 }
 
-func (m *ChatScreenModel) chatView(sb *strings.Builder) {
-	sb.WriteString(fmt.Sprintf("=== Chat with User %s ===\n\n", m.State.ReceiverName))
+func (m *ChatScreenModel) renderChatMode(b *strings.Builder) {
+	b.WriteString(fmt.Sprintf("=== Chat with %s ===\n\n", m.State.ReceiverName))
 
-	msgs := m.Store.Messages
-	if len(msgs) == 0 {
-		if !m.State.HistoryLoaded {
-			sb.WriteString("Loading history...\n\n")
-		} else {
-			sb.WriteString("No messages yet.\n\n")
-		}
+	if len(m.Messages) == 0 {
+		m.renderEmptyState(b)
+	} else {
+		m.renderMessages(b)
 	}
 
-	for _, msg := range msgs {
+	b.WriteString("\n" + m.Inputs.ChatAreaInput.View())
+	b.WriteString("\n\nEnter — send, Ctrl+S — search user, Ctrl+C — quit\n")
+}
+
+func (m *ChatScreenModel) renderEmptyState(b *strings.Builder) {
+	if !m.State.HistoryLoaded {
+		b.WriteString("Loading history...\n\n")
+	} else {
+		b.WriteString("No messages yet.\n\n")
+	}
+}
+
+func (m *ChatScreenModel) renderMessages(b *strings.Builder) {
+	for _, msg := range m.Messages {
 		if msg.SenderID == m.UserID {
-			sb.WriteString(strings.Repeat(" ", 80) + msg.Text + "\n")
+			b.WriteString(strings.Repeat(" ", 80) + msg.Text + "\n")
 		} else {
-			sb.WriteString(fmt.Sprintf("User %d: %s\n", msg.SenderID, msg.Text))
+			b.WriteString(fmt.Sprintf("User %d: %s\n", msg.SenderID, msg.Text))
 		}
 	}
 }
